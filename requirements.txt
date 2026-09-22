@@ -1,0 +1,9 @@
+# Install a platform-appropriate PyTorch/torchvision pair first.
+# This is a dependency list, not a recovered historical lockfile.
+numpy
+Pillow
+scipy
+pytorch-fid
+dominate
+matplotlib
+labelme
