@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+.ipynb_checkpoints/
+data/
+outputs/
+checkpoints/
+results/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+.env
+.DS_Store
+third_party/pix2pixHD/datasets/
+third_party/pix2pixHD/checkpoints/
+third_party/pix2pixHD/results/
