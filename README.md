@@ -1,53 +1,122 @@
-# Wind Turbine Blade Defect Detection: Synthetic Image Experiments
+# Wind Turbine Blade Defect Detection with Synthetic Data Augmentation
 
-A research portfolio by **Cheng-Jui Lai**, presenting the semantic image synthesis and FID evaluation work from a team capstone on wind turbine blade defect detection.
+**Undergraduate capstone | Tunghai University | Research portfolio of Cheng-Jui Lai**
 
-**Scope:** this repository contains the pix2pixHD experiment code and evaluation utilities recovered from the project archive. The broader team project also used Stable Diffusion and YOLOv9; those implementations are not included in this package.
+This team project investigates how synthetic images can support wind turbine blade defect detection when real defect images are limited. We explored semantic image synthesis, selected Stable Diffusion with LoRA for the final generation workflow, and evaluated real, synthetic, and mixed training data using YOLOv9. The final report also includes comparisons with YOLOv10, YOLOv11, and YOLOv12.
 
 [Related publication on IEEE Xplore](https://ieeexplore.ieee.org/document/11661275)
 
-## Research motivation
+**Repository scope:** the code currently provided covers the early pix2pixHD experiments, preprocessing utilities, and a FID evaluation wrapper. The results below summarize the broader team project as documented in the final capstone report. Stable Diffusion/LoRA and YOLO training implementations, datasets, and trained weights are not included in this version.
 
-The project explored synthetic image augmentation for wind turbine blade defect detection with limited labeled data. Semantic label maps were used to guide image generation, and Fréchet Inception Distance (FID) was used to compare generated and real image distributions.
+## Research question
+
+Can generated wind turbine blade images supplement limited real training data while preserving useful defect features?
+
+The project combines UAV imagery and laboratory photographs with synthetic images. Its focus is on image quality, the effect of training-data composition on detection performance, and the limitations of generated defects, especially fine cracks.
 
 ## My contribution
 
-- Conducted the semantic image synthesis experiments represented by this pix2pixHD archive.
-- Performed FID evaluation of generated images.
-- Assisted with Stable Diffusion parameter adjustments and image generation.
+- Conducted early semantic image synthesis experiments using the pix2pixHD-based implementation provided here.
+- Evaluated generated image distributions using FID and compared early GAN results with the team's Stable Diffusion outputs to inform the generation-method selection.
+- Assisted with Stable Diffusion parameter adjustments, including generation batch settings, and generated image samples.
 
-My teammates primarily handled Stable Diffusion and YOLOv9. Their work is credited as part of the team project, not claimed as my individual implementation. The underlying pix2pixHD model is third-party research software, not an architecture I developed.
+My teammates primarily handled the Stable Diffusion pipeline and YOLOv9 implementation and training. Detection results are team outcomes. The underlying pix2pixHD architecture and source code are credited to their original authors.
 
-## Naming clarification
+## Project workflow
 
-The source archive was named `GauGAN.zip`, but its README, model code, and training notebook identify **NVIDIA pix2pixHD**. This repository uses the implementation name supported by those files. The archive name should not be treated as proof that a SPADE/GauGAN model was trained.
+1. **Prepare real images:** collect UAV and laboratory images and prepare annotations. The report describes LabelMe and SAM-assisted annotation, with manual correction needed for fine cracks and reflective boundaries.
+2. **Explore semantic image synthesis:** train the early pix2pixHD-based models on semantic label maps and inspect their generated images.
+3. **Generate synthetic images:** use Stable Diffusion with LoRA, adjusting prompts and sampling settings for blade appearance and defect characteristics.
+4. **Assess image quality:** inspect geometry, lighting, texture, and defect placement, and evaluate real/generated distributions with FID.
+5. **Train and evaluate detectors:** compare real-only, synthetic-only, and mixed datasets, with YOLOv9 as the main detector and additional YOLO versions as comparisons.
+
+The final workflow uses 512 × 512 images. Generation quality assessment and detector evaluation are separate: distributional similarity alone does not establish defect detection accuracy.
+
+## Reported results
+
+Source: *Generalized Wind Turbine Blade Defect Detection via Synthetic Image Enhancement* (合成影像強化通用風機葉片缺陷檢測之研究), final undergraduate capstone report, dated December 13, 2025. Page references below use the page numbers printed in the report. These are report-derived results, not new measurements reproduced from this repository.
+
+### Image generation and FID
+
+| Experiment | Reported FID | Evidence |
+| --- | ---: | --- |
+| Early semantic GAN experiments, called “GauGAN” in the report | approximately 200–230 | Section 2.1.3, p. 13 |
+| Final Stable Diffusion + LoRA output | **100.3875 (approximately 100.4)** | Figure 4.1, p. 26 |
+
+Figure 4.1 records **1,521 real images and 1,521 generated images**, with an output labeled **Clean-FID** of `100.3874635568371`. The surrounding prose gives 100.3; this README uses the recorded output and rounds it to 100.4.
+
+The report uses these results to motivate the selection of Stable Diffusion. The complete evaluation configuration for each earlier GAN run is not available here, so the table should not be interpreted as an independently reproduced, fully controlled benchmark.
+
+**Evaluation implementation:** `scripts/evaluate_fid.py` uses `pytorch-fid`. It is not established as the script that produced Figure 4.1. Reproducing that number requires the final evaluation code, image sets, library version, preprocessing, and feature settings. Different FID implementations and settings should not be assumed interchangeable.
+
+The original archived FID folders contained 500 real images and 3 generated images. Those are the contents of that backup, **not the sample counts of the final evaluation**. Earlier archive-only notes in `docs/EXPERIMENTS.md` and `docs/PROVENANCE.md` describe the initial code review; the report-derived results in this README supplement that earlier evidence.
+
+### Selected YOLOv9 results
+
+The following entries are transcribed from Tables 4.5, 4.6, and 4.8 (pp. 30–32). Counts are shown in separate columns to avoid ambiguity in the report's ratio notation.
+
+| Real training images | Synthetic training images | Precision | Recall | mAP@50 | mAP@50–95 |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 150 | 0 | 0.868 | 0.878 | 0.929 | 0.549 |
+| 550 | 0 | 0.932 | 0.909 | 0.967 | 0.615 |
+| 3,050 | 0 | 0.940 | 0.958 | 0.982 | 0.695 |
+| 0 | 3,050 | 0.875 | 0.850 | 0.916 | 0.606 |
+| 50 | 50 | 0.824 | 0.625 | 0.726 | 0.378 |
+| 50 | 500 | 0.919 | 0.776 | 0.896 | 0.509 |
+| 50 | 3,000 | 0.904 | 0.830 | 0.913 | 0.614 |
+
+With 50 real images held fixed, the reported mAP@50–95 increases from 0.378 with 50 synthetic images to 0.614 with 3,000 synthetic images. At the same total training count of 3,050 images, the real-only condition reaches 0.695, compared with 0.614 for the mixed condition and 0.606 for the synthetic-only condition.
+
+These observations support using synthetic data as a supplement under limited real-data conditions. They do not establish that mixed data always outperforms real-only training. Split manifests, evaluation-set composition, exact model variants, seeds, repeated-run variability, and original training logs are not bundled; those details must be verified before treating this as a reproducible benchmark or making claims about performance on unseen wind farms.
+
+## Failure cases and lessons
+
+The report documents several practical limitations (pp. 37–39):
+
+- **Oversized generated cracks:** some samples depict damage larger than the intended surface defects and are removed during manual screening.
+- **Cracks in the background:** incorrect defect placement can introduce misleading visual associations.
+- **Fine, low-contrast cracks:** the detector can miss subtle cracks or assign low confidence.
+- **Early GAN artifacts:** blurred blade boundaries and distorted or smoothed crack textures limit the usefulness of the initial synthesis approach.
+
+A useful synthetic dataset requires both distributional evaluation and defect-specific visual inspection. Increasing sample count alone does not guarantee that the generated examples represent the target defects well.
+
+## Implementation naming
+
+The capstone report calls the early semantic synthesis method **GauGAN**. The supplied source code and training notebook are based on **NVIDIA pix2pixHD**, and reference [17] in the report is the pix2pixHD paper. Accordingly, this repository uses **pix2pixHD-based semantic image synthesis** for the included implementation and retains “GauGAN” only when referring to the report's terminology.
 
 ## Repository contents
 
 | Path | Purpose |
 | --- | --- |
-| `third_party/pix2pixHD/` | Python source recovered from the uploaded archive, with original license |
-| `notebooks/original_training_commands.ipynb` | Historical Colab commands; outputs and metadata cleared |
-| `scripts/convert_labelme.py` | LabelMe JSON to class-ID masks, adapted to accept paths |
-| `scripts/resize_images.py` | Resize images or masks while preserving source files |
-| `scripts/evaluate_fid.py` | Configurable FID evaluation with optional JSON results |
-| `docs/EXPERIMENTS.md` | Recorded settings and evidence limitations |
-| `docs/SETUP.md` | Setup and training instructions |
+| `third_party/pix2pixHD/` | Archived model source with the original third-party license |
+| `notebooks/original_training_commands.ipynb` | Historical Colab commands; saved outputs and metadata cleared |
+| `scripts/convert_labelme.py` | Convert LabelMe annotations to grayscale class-ID masks |
+| `scripts/resize_images.py` | Resize photographs or masks into a separate output folder |
+| `scripts/evaluate_fid.py` | Configurable pytorch-fid wrapper with optional JSON output |
+| `docs/SETUP.md` | Setup and historical training commands |
+| `docs/EXPERIMENTS.md` | Early archive settings and evidence limitations |
 | `docs/PROVENANCE.md` | Source attribution and packaging changes |
+| `docs/VALIDATION.md` | Checks performed during repository preparation |
 
-## Quick start: FID
+## Setup and usage
 
-Use Python 3 in an isolated environment. Install PyTorch and torchvision for your platform, then install `requirements.txt`. See [setup instructions](docs/SETUP.md).
+Use an isolated Python 3 environment and install a compatible PyTorch/torchvision pair for your platform. Then install the remaining dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+The requirements file is a dependency list, not a recovered environment lockfile. See [setup notes](docs/SETUP.md) for historical pix2pixHD training commands. Full GPU training and numerical FID evaluation have not been rerun during repository preparation; the legacy model code may need compatibility updates.
+
+### Evaluate image folders
 
 ```bash
 python scripts/evaluate_fid.py --real data/fid_real --fake data/fid_fake --device cpu --output outputs/fid_run.json
 ```
 
-For a configured CUDA environment, use `--device cuda:0`. The first evaluation may download Inception weights. Images are read directly from each folder, not recursively. No datasets or model weights are bundled.
+Use `--device cuda:0` for a configured CUDA environment. The first run may download Inception weights. Images are read directly from the specified folders, not recursively. Use a new output filename for each run. This command computes a new pytorch-fid result; it does not reproduce the report's Clean-FID result without further protocol verification.
 
-The wrapper records sample counts and settings. It does not reproduce a published result by itself: that requires the original image sets, preprocessing, model checkpoint, and environment.
-
-## Data preparation
+### Prepare semantic masks and images
 
 ```bash
 python scripts/convert_labelme.py --input data/annotations --output data/raw_masks
@@ -55,16 +124,12 @@ python scripts/resize_images.py --input data/raw_masks --output data/train_label
 python scripts/resize_images.py --input data/images --output data/train_img --size 512 --kind image
 ```
 
-The size above is an example, not a verified historical configuration. Pair each image and mask by filename stem. Masks use nearest-neighbor interpolation and lossless PNG output. The converter retains the supplied class mapping: background/sky=0, blade=1, tower/pillar=2, crack=3, floor/ground=4, fence=5. Unknown labels stop conversion for explicit correction. Existing masks with the same name are overwritten by the converter; choose a fresh output folder. Class-presence checks do not establish pixel-level annotation accuracy.
+Pair images and masks by filename stem. Mask resizing uses nearest-neighbor interpolation and lossless PNG output. The supplied mapping is background/sky=0, blade=1, tower/pillar=2, crack=3, floor/ground=4, and fence=5. Unknown labels stop conversion for correction. Use a fresh converter output folder because matching filenames are overwritten. Class-presence checks do not verify pixel-level annotation accuracy.
 
-## Results and limitations
+The archived training commands use `label_nc=10`, while the conversion mapping defines IDs 0–5. Confirm the intended class configuration and checkpoint compatibility before training. The 512-pixel preprocessing example follows the final report's image size and does not establish the resolution of every early experiment.
 
-The original notebook contains completed training logs, but this package does not claim a verified FID score or detector improvement. The archived FID folders held 500 real images and only 3 generated images, which is not an adequate basis for presenting a stable final comparison. A note mentioning 145 was not accompanied by a matching evaluation log.
+## Attribution and availability
 
-Compare FID under a consistent protocol; no universal “good/bad” threshold is claimed here. See [experiment notes](docs/EXPERIMENTS.md). End-to-end training and FID were not rerun during packaging; the historical model code may require compatibility updates for modern PyTorch.
+**pix2pixHD:** Ting-Chun Wang, Ming-Yu Liu, Jun-Yan Zhu, Andrew Tao, Jan Kautz, and Bryan Catanzaro, *High-Resolution Image Synthesis and Semantic Manipulation with Conditional GANs*, CVPR 2018. [Original repository](https://github.com/NVIDIA/pix2pixHD).
 
-## Attribution and reuse
-
-pix2pixHD: Ting-Chun Wang, Ming-Yu Liu, Jun-Yan Zhu, Andrew Tao, Jan Kautz, and Bryan Catanzaro, *High-Resolution Image Synthesis and Semantic Manipulation with Conditional GANs*, CVPR 2018. Upstream: https://github.com/NVIDIA/pix2pixHD
-
-The original [third-party license](third_party/pix2pixHD/LICENSE.txt) is preserved. No new blanket license has been assigned to the team's own code. Dataset images, annotations, model weights, and the publisher PDF are excluded pending confirmation of redistribution scope. This is a review package, not a claim that all team materials are cleared for public release.
+The [original third-party license](third_party/pix2pixHD/LICENSE.txt) is retained. No blanket open-source license is assigned to the team's own additions. Datasets, annotations, model weights, and the report/publication PDFs are not distributed in this repository. The IEEE link above provides access to the related publication's record; result references in this README specifically refer to the capstone report.
