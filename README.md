@@ -6,7 +6,7 @@ This team project investigates how synthetic images can support wind turbine bla
 
 [Related publication on IEEE Xplore](https://ieeexplore.ieee.org/document/11661275)
 
-**Repository scope:** the code currently provided covers the early pix2pixHD experiments, preprocessing utilities, and a FID evaluation wrapper. The results below summarize the broader team project as documented in the final capstone report. Stable Diffusion/LoRA and YOLO training implementations, datasets, and trained weights are not included in this version.
+**Repository scope:** includes the early pix2pixHD experiments, preprocessing/FID utilities, archived Stable Diffusion + LoRA notebooks, and the supplied Ultralytics detector source with project dataset configurations. The results below summarize the broader team project. Datasets, trained weights, exact detector run records and a fully pinned environment are not included. See [Stable Diffusion workflow](notebooks/stable_diffusion/README.md), [YOLO setup](docs/YOLO.md), and [integration record](docs/INTEGRATION.md).
 
 ## Research question
 
@@ -61,9 +61,11 @@ Figure 4.1 records **1,521 real images and 1,521 generated images**, with an out
 
 The report uses these results to motivate the selection of Stable Diffusion. The complete evaluation configuration for each earlier GAN run is not available here, so the table should not be interpreted as an independently reproduced, fully controlled benchmark.
 
-**Evaluation implementation:** `scripts/evaluate_fid.py` uses `pytorch-fid`. It is not established as the script that produced Figure 4.1. Reproducing that number requires the final evaluation code, image sets, library version, preprocessing, and feature settings. Different FID implementations and settings should not be assumed interchangeable.
+**Evaluation implementation:** the newly supplied `notebooks/stable_diffusion/Clean_FID.ipynb` calls Clean-FID with `mode="clean"`; its saved original output matches Figure 4.1 exactly and records 1,521 images in each folder. It also records a separate `legacy_pytorch` score of 100.54758714351993. Outputs are cleared in the public notebook; these recovered values are documented in `docs/INTEGRATION.md`. The existing `scripts/evaluate_fid.py` uses `pytorch-fid`, a separate implementation. No FID calculation was rerun during packaging.
 
-The original archived FID folders contained 500 real images and 3 generated images. Those are the contents of that backup, **not the sample counts of the final evaluation**. Earlier archive-only notes in `docs/EXPERIMENTS.md` and `docs/PROVENANCE.md` describe the initial code review; the report-derived results in this README supplement that earlier evidence.
+**Evaluation-set limitation:** the supplied operating guide identifies the real FID set as the same selected 1,521 images used for LoRA training. This measures similarity to the training-image distribution, not independent held-out generation quality. Exact images, manifests and dependency versions are still needed for reproduction. Different FID implementations and settings should not be assumed interchangeable.
+
+The original archived FID folders contained 500 real images and 3 generated images. Those are the contents of that backup, **not the sample counts of the final evaluation**. Earlier archive-only notes in `docs/EXPERIMENTS.md` and `docs/PROVENANCE.md` describe the initial code review; the report-derived results in this README supplement that earlier evidence. Their statements about Stable Diffusion/YOLO being absent refer to the initial package and are superseded by this integration; see `docs/INTEGRATION.md`.
 
 ### Selected YOLOv9 results
 
@@ -102,6 +104,10 @@ The capstone report calls the early semantic synthesis method **GauGAN**. The su
 
 | Path | Purpose |
 | --- | --- |
+| `notebooks/stable_diffusion/` | Five archived notebooks and workflow/settings documentation |
+| `third_party/ultralytics/` | Supplied Ultralytics runtime source, project YAMLs and upstream license |
+| `docs/YOLO.md` | Detector setup and explicitly labeled example commands |
+| `docs/INTEGRATION.md` | Added archive evidence, packaging changes and validation limits |
 | `third_party/pix2pixHD/` | Archived model source with the original third-party license |
 | `notebooks/original_training_commands.ipynb` | Historical Colab commands; saved outputs and metadata cleared |
 | `scripts/convert_labelme.py` | Convert LabelMe annotations to grayscale class-ID masks |
@@ -114,7 +120,7 @@ The capstone report calls the early semantic synthesis method **GauGAN**. The su
 
 ## Setup and usage
 
-Use an isolated Python 3 environment and install a compatible PyTorch/torchvision pair for your platform. Then install the remaining dependencies:
+Use separate environments for pix2pixHD, Stable Diffusion and YOLO. Follow the component guides linked above for the latter two. For the original pix2pixHD/FID utilities, use an isolated Python 3 environment and install a compatible PyTorch/torchvision pair for your platform. Then install the remaining dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
@@ -143,6 +149,11 @@ Pair images and masks by filename stem. Mask resizing uses nearest-neighbor inte
 The archived training commands use `label_nc=10`, while the conversion mapping defines IDs 0–5. Confirm the intended class configuration and checkpoint compatibility before training. The 512-pixel preprocessing example follows the final report's image size and does not establish the resolution of every early experiment.
 
 ## Attribution and availability
+
+**Ultralytics:** the supplied source tree retains its [upstream README](third_party/ultralytics/README.md), [citation](third_party/ultralytics/CITATION.cff), and [LICENSE](third_party/ultralytics/LICENSE). Its code and detector architectures are credited to the original authors. See [YOLO notes](docs/YOLO.md) for the distinction between project configurations and upstream code.
+
+**Stable Diffusion workflow:** archived team notebooks use Meta SAM, OpenCLIP/OpenAI CLIP, Hugging Face diffusers/PEFT, Stable Diffusion v1.5, RealisticVision v2, AUTOMATIC1111 and Clean-FID. Their source/model identifiers appear in the notebooks. Third-party dependencies and checkpoints remain subject to their respective terms. Midjourney materials have not been supplied.
+
 
 **pix2pixHD:** Ting-Chun Wang, Ming-Yu Liu, Jun-Yan Zhu, Andrew Tao, Jan Kautz, and Bryan Catanzaro, *High-Resolution Image Synthesis and Semantic Manipulation with Conditional GANs*, CVPR 2018. [Original repository](https://github.com/NVIDIA/pix2pixHD).
 

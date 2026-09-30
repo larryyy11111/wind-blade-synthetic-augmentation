@@ -1,0 +1,10 @@
+{
+  "source_archives": {
+    "stable diffusion(1).zip": "1d80dcaa3e3090745a17f5b85058cab8fa8189d3f048bbc4cc57c614d18b2ea3",
+    "yolo.zip": "60697de51d76665e6cd9eb195899bdb32799fa7a267f5a5b236c0b7bf8b80523"
+  },
+  "included_ultralytics_files": 236,
+  "changes": [
+    "4_RealisticVision_v2_0_+_LoRA__CRACK.ipynb: corrected return Non typo"
+  ]
+}
